@@ -1,0 +1,41 @@
+
+*****************************DATA CLEANING *********************************
+
+-- Before cleaning the data, I'll duplicate the table with the Raw Data---
+-- Just as a prevention step and I'll be working on the new table----
+
+USE udemy;
+
+CREATE TABLE udemy_staging
+LIKE udemy_courses ; -- Create a new table with the Raw Data
+
+INSERT udemy_staging
+SELECT *
+FROM udemy_courses;  -- Insert the raw Data
+
+
+ -- 1. Standardize Data
+
+
+-- Deleting white spaces of the right hand side from course_title, level & subject column
+
+SELECT course_title, TRIM(course_title)
+FROM udemy_staging;
+
+UPDATE udemy_staging
+SET course_title = TRIM(course_title);
+
+-- 2. Checking for NULL values
+
+SELECT * FROM udemy_staging; -- we have 3678 rows wich are identify with course_id 
+
+
+SELECT COUNT(DISTINCT course_id)
+FROM udemy_staging ; --- This query return 3672 distinct ID and we have 3678 records
+				     --- It  may indicated that there are 6 NULL or duplicate values 
+
+-- Checking for NULL values on All columns 
+
+SELECT COUNT(*) AS null_count
+FROM udemy_staging
+WHERE course_id IS NULL; 
