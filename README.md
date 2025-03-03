@@ -34,4 +34,5 @@ I’ll clean and query the data in SQL before importing it to Power BI. This pro
 
 * Creacion of Database Schema
 *  Data cleansing
-*  Exploratory Data Analysis 
+*  Exploratory Data Analysis
+*  Dataset: Kaggle
