@@ -39,3 +39,102 @@ FROM udemy_staging ; --- This query return 3672 distinct ID and we have 3678 rec
 SELECT COUNT(*) AS null_count
 FROM udemy_staging
 WHERE course_id IS NULL; 
+
+-- 3.Checking for duplicates values 
+
+SELECT course_id, COUNT(*) AS occurrences
+FROM udemy_staging
+GROUP BY course_id
+HAVING COUNT(*) > 1;
+
+-- 3.1 Checking if duplicate records have the same data sctructure
+SELECT * 
+FROM udemy_staging
+WHERE course_id IN (837322, 1157298, 1084454, 1035638, 185526, 28295);
+
+	
+-- 3.2 Removing duplicates with CTE
+-- CTE allow us to list the row number so that, we can identify wich row to remove
+
+
+WITH RowNumCTE AS(
+SELECT *,
+	ROW_NUMBER() OVER (
+    PARTITION BY course_id,   
+				price,
+                published_timestamp,
+				subject
+                ORDER BY  
+					course_id
+				) AS _rownumber                  ## This part of the code lists the row
+FROM udemy.udemy_staging                                         ## and duplicates row must appear equal to 2
+-- Order by course_id
+)
+SELECT *
+FROM  RowNumCTE                   -- This part of the code retrieve the data from the CTE
+WHERE _rownumber > 1
+ORDER BY price
+
+
+-- To delete the duplicate values must updated the end part of the code
+
+DELETE
+FROM  RowNumCTE                   -- This part of the code delete the duplicates values
+WHERE _rownumber > 1
+
+
+--3.2 Normalizing Casing 
+
+UPDATE udemy_staging
+SET course_title = CONCAT(UPPER(LEFT(course_title, 1)), LOWER(SUBSTRING(course_title, 2)));
+
+
+--- 4. Formating timestamp column
+
+## Formating timestamp to DATETIME format (without T and Z) 
+
+SELECT `published_timestamp`,
+STR_TO_DATE('2014-03-27T17:58:37Z', '%Y-%m-%dT%H:%i:%sZ')- 
+FROM udemy_staging;
+
+-- This query is not correct because is based on an static date '2014-03-27T17:58:37Z'
+-- instead of applying the change to the existing values in the column.
+
+
+--- 4.1 if you have followed the analysis carefully, you will have noticed that the 
+---above code is not correct. There's a typo. Hence the relevance of copying your main
+--- table because I'm now able to replace the values from `published_timestamp` column 
+--- with the original values 
+
+
+UPDATE udemy.udemy_staging AS us
+JOIN udemy.udemy_courses AS uc 
+ON us.course_id = uc.course_id  
+SET us.published_timestamp = uc.published_timestamp;
+
+##checking the result before formatting the table
+
+SELECT `published_timestamp`, 
+       STR_TO_DATE(`published_timestamp`, '%Y-%m-%dT%H:%i:%sZ') AS formatted_timestamp
+FROM udemy_staging;
+
+## Formatting the table 
+
+UPDATE udemy_staging
+SET published_timestamp = STR_TO_DATE(published_timestamp, '%Y-%m-%dT%H:%i:%sZ');
+
+-- 5. Formating content-duration column to hours
+
+# As this data is store as decimal number and I want first to verify the conversation
+#before updating the table. I will create a new column to store the values as TIME 
+
+ALTER TABLE udemy_staging ADD COLUMN content_duration2 TIME;
+
+UPDATE udemy_staging
+SET content_duration2 = SEC_TO_TIME(`content_duration` * 3600);
+
+-- Dropping the content_duration column as I dont needed it
+
+ALTER TABLE udemy_staging  
+DROP COLUMN content_duration;
+
