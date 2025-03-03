@@ -4,8 +4,7 @@
 
 
 🔹 Business Case & Goals
-Scenario:
-I work as a Data Analyst at Udemy, and I've been asked to analyze key metrics, compare Udemy's performance with EdX, and assess brand popularity using Google Trends.
+Scenario: I work as a Data Analyst at Udemy, and I've been asked to analyze key metrics, compare Udemy's performance with EdX, and assess brand popularity using Google Trends.
 
 Objectives:
 
