@@ -33,6 +33,6 @@ I’ll clean and query the data in SQL before importing it to Power BI. This pro
 ## Appendix
 
 * Creacion of Database Schema
-*  Data cleansing
+*  Data cleaning
 *  Exploratory Data Analysis
 *  Dataset: Kaggle
