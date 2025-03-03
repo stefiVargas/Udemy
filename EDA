@@ -1,0 +1,263 @@
+******************************EXPLORATORY DATA ANALYSIS************************
+
+
+## In this part I dont have any structure, just to explore the data, understand it
+## and find trends or patterns and interesting results.
+
+-- 1. Course with the highest number of hours
+
+SELECT course_id, course_title, price, MAX(content_duration2)
+FROM udemy_staging;
+
+
+--2. Checking how many subjects courses are divided into
+
+SELECT DISTINCT subject
+FROM udemy_staging;
+
+
+--3. Total Program Enrollment on 'Web Development'
+
+
+SELECT 
+SUM(num_subscribers) AS total_program_enrollment, 
+COUNT(course_title) AS num_courses, 
+AVG(price) AS avg_course_purchase, 
+MIN(price) AS min_course_purchase, 
+MAX(price) AS max_course_purchase
+FROM udemy_staging
+WHERE subject ='Web Development'
+ORDER BY price DESC;
+
+
+--3.1 Breaking down by Course_title
+
+SELECT 
+	course_title,
+    SUM(num_subscribers) AS total_program_enrollment, 
+    COUNT(course_title) AS num_courses, 
+    AVG(price) AS avg_course_purchase, 
+    MIN(price) AS min_course_purchase, 
+    MAX(price) AS max_course_purchase
+FROM udemy_staging
+WHERE subject = 'Web Development'
+GROUP BY course_title
+ORDER BY max_course_purchase DESC;
+
+
+--4. Total Program Enrollment on 'Business Finance'
+
+SELECT 
+    SUM(num_subscribers) AS total_program_enrollment, 
+    COUNT(course_title) AS num_courses, 
+    AVG(price) AS avg_course_purchase, 
+    MIN(price) AS min_course_purchase, 
+    MAX(price) AS max_course_purchase
+FROM udemy_staging
+WHERE subject = 'Business Finance';
+
+--4.1 Breaking down by Course_title
+
+SELECT 
+	course_title,
+    SUM(num_subscribers) AS total_program_enrollment, 
+    COUNT(course_title) AS num_courses, 
+    AVG(price) AS avg_course_purchase, 
+    MIN(price) AS min_course_purchase, 
+    MAX(price) AS max_course_purchase
+FROM udemy_staging
+WHERE subject = 'Business Finance'
+GROUP BY course_title
+ORDER BY max_course_purchase DESC;
+
+--5.Total Program Enrollment on 'Graphic Design'
+
+SELECT 
+    SUM(num_subscribers) AS total_program_enrollment, 
+    COUNT(course_title) AS num_courses, 
+    AVG(price) AS avg_course_purchase, 
+    MIN(price) AS min_course_purchase, 
+    MAX(price) AS max_course_purchase
+FROM udemy_staging
+WHERE subject = 'Graphic Design';
+
+--5.1 Breaking down by Course_title
+
+SELECT 
+	course_title,
+    SUM(num_subscribers) AS total_program_enrollment, 
+    COUNT(course_title) AS num_courses, 
+    AVG(price) AS avg_course_purchase, 
+    MIN(price) AS min_course_purchase, 
+    MAX(price) AS max_course_purchase
+FROM udemy_staging
+WHERE subject = 'Graphic Design'
+GROUP BY course_title
+ORDER BY max_course_purchase DESC;
+
+--6.Total Program Enrollment on 'Musical Instruments'
+
+SELECT 
+    SUM(num_subscribers) AS total_program_enrollment, 
+    COUNT(course_title) AS num_courses, 
+    AVG(price) AS avg_course_purchase, 
+    MIN(price) AS min_course_purchase, 
+    MAX(price) AS max_course_purchase
+FROM udemy_staging
+WHERE subject = 'Musical Instruments';
+
+--6.1 Breaking down by Course_title
+SELECT 
+	course_title,
+    SUM(num_subscribers) AS total_program_enrollment, 
+    COUNT(course_title) AS num_courses, 
+    AVG(price) AS avg_course_purchase, 
+    MIN(price) AS min_course_purchase, 
+    MAX(price) AS max_course_purchase
+FROM udemy_staging
+WHERE subject = 'Musical Instruments'
+GROUP BY course_title
+ORDER BY max_course_purchase DESC;
+
+--7.Courses with the most num_subscribers
+
+SELECT course_title, SUM(num_subscribers)
+FROM udemy.udemy_staging
+GROUP BY course_title
+ORDER BY 2 DESC
+LIMIT 10;
+
+-- 7.1 By subject
+
+SELECT subject, SUM(num_subscribers)
+FROM udemy.udemy_staging
+GROUP BY subject
+ORDER BY 2 DESC
+LIMIT 10;
+
+-- 7.2 By Content duration 
+
+-- Does content duration have any influence on the number of subscribers?
+
+SELECT content_duration2, SUM(num_subscribers)
+FROM udemy.udemy_staging
+GROUP BY content_duration2
+ORDER BY 2 DESC
+LIMIT 10;
+
+-- 7.3 By year 
+
+SELECT YEAR(published_timestamp), SUM(num_subscribers)
+FROM udemy.udemy_staging
+GROUP BY YEAR(published_timestamp)
+ORDER BY 1 ASC;
+
+-- 7.4 Courses with the most num_subscribers by year and subject
+
+SELECT YEAR(published_timestamp), SUM(num_subscribers),course_title, subject
+FROM udemy.udemy_staging
+GROUP BY YEAR(published_timestamp)
+ORDER BY 1 ASC;
+
+ -- 8.Earlier we looked at  Courses with the most num_subscribers. 
+ 
+ --Now let's look at that per year and to obtain:
+ --1.The top 3 most subscribed courses for each year.
+--2.Identify trends in course popularity over time.
+
+
+
+WITH Course_Year AS (
+  SELECT 
+    course_title, 
+    YEAR(published_timestamp) AS year, 
+    SUM(num_subscribers) AS total_subscribers
+  FROM udemy.udemy_staging
+  GROUP BY course_title, YEAR(published_timestamp)
+),
+Course_Year_Rank AS (
+  SELECT 
+    course_title, 
+    year, 
+    total_subscribers, 
+    DENSE_RANK() OVER (PARTITION BY year ORDER BY total_subscribers DESC) AS ranking
+  FROM Course_Year
+)
+SELECT course_title, year, total_subscribers, ranking
+FROM Course_Year_Rank
+WHERE ranking <= 3  -- Top 3 most subscribed courses per year
+AND year IS NOT NULL
+ORDER BY year ASC, total_subscribers DESC;
+
+-- 9. Let's Track subscribers Growth and see if we can identify anytrends for 
+-- subscribers over time.
+
+--- Rolling Total subscribers Per year and Month
+
+WITH Date_CTE AS (
+  SELECT 
+    DATE_FORMAT(published_timestamp, '%Y-%m') AS dates, 
+    SUM(num_subscribers) AS total_subscribers
+  FROM udemy.udemy_staging
+  GROUP BY dates
+  ORDER BY dates ASC
+)
+SELECT 
+  dates, 
+  SUM(total_subscribers) OVER (ORDER BY dates ASC) AS rolling_total_subscribers
+FROM Date_CTE
+ORDER BY dates ASC;
+
+--10. Does price have any influence on the number of subscribers?
+
+-- Paid courses
+
+SELECT 
+    price, 
+    is_paid, 
+    SUM(num_subscribers) AS total_subscribers
+FROM udemy.udemy_staging
+WHERE is_paid = 'True'  -- Only paid courses
+GROUP BY price, is_paid
+ORDER BY total_subscribers DESC
+LIMIT 10;
+
+-- 10.1 Free courses
+
+SELECT 
+    price, 
+    is_paid, 
+    SUM(num_subscribers) AS total_subscribers
+FROM udemy.udemy_staging
+WHERE is_paid = 'False'  -- Only free courses
+GROUP BY price, is_paid
+ORDER BY total_subscribers DESC
+LIMIT 10;
+
+--11. Segment by subject. Are certain subjects more popular for free/paid courses?.
+
+-- Free courses
+
+SELECT 
+    is_paid, 
+    subject,
+    SUM(num_subscribers) AS total_subscribers
+FROM udemy.udemy_staging
+WHERE is_paid = 'False'  
+GROUP BY is_paid, subject
+ORDER BY total_subscribers DESC
+
+--11.1 
+
+-- Paid Courses
+
+SELECT 
+    is_paid, 
+    subject,
+    SUM(num_subscribers) AS total_subscribers
+FROM udemy.udemy_staging
+WHERE is_paid = 'True'  
+GROUP BY  is_paid, subject
+ORDER BY total_subscribers DESC
+LIMIT 10;
+
