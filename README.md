@@ -8,9 +8,9 @@ Scenario: I work as a Data Analyst at Udemy, and I've been asked to analyze key 
 
 Objectives:
 
-✅ Compare Udemy vs. EdX course offerings, pricing, course length 
-✅ Track historical search popularity of both platforms
-✅ Ratio of Cost to Content
+✅ Compare Udemy vs. EdX course offerings, pricing, course length.
+✅ Track historical search popularity of both platforms.
+✅ Ratio of Cost to Content.
 
 Step 1: Load & Process Udemy Data (SQL & ETL Approach)
 
